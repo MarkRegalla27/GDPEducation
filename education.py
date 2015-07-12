@@ -8,8 +8,8 @@ import math
 import requests
 from pandas.io.json import json_normalize
 import sqlite3 as lite
-import time  # a package with datetime objects
-from dateutil.parser import parse  # a package for parsing a string into a Python datetime object
+import time                        #A package with datetime objects.
+from dateutil.parser import parse  #For parsing strings into datetime objects.
 import collections
 import datetime
 import pandas.io.sql as psql
@@ -18,7 +18,7 @@ import os
 import re
 import csv
 
-url = "http://web.archive.org/web/20110514112442/http://unstats.un.org/unsd/demographic/products/socind/education.htm"
+url = "http://web.archive.org/web/20110514112442/http://unstats.un.org/unsd/demographic/products/socind/education.htm"      #will not split to next line
 r = requests.get(url)
 soup = BeautifulSoup(r.content)
 
@@ -27,13 +27,15 @@ soup = BeautifulSoup(r.content)
 #print(soup.prettify())
 #print soup('table')[6]
 
+#A becomes the table of school life expectancy data
 #A = soup('table')[6].findall('tr',{'class': 'tcont'})
-A = soup('table')[6].findAll('tr')
+A = soup('table')[6].findAll('tr')  
 #A = soup('table')[6].findall('tr')
 #print 'Length of A[6]: ' + str(len(A[6]))
 #print 'Length of A: ' + str(len(A)) 
 
-B = [x for x in A if len(x)==25] #removing records without value
+#B becomes the table without blank records
+B = [x for x in A if len(x)==25]
 records = []
 
 for rows in B:
@@ -50,9 +52,11 @@ column_name = ['country', 'year', 'total', 'men', 'women']
 
 table = pd.DataFrame(records, columns = column_name)
 #table['year'] = table['year'].map(lambda x: int(x))
-table['total'] = table['total'].map(lambda x: int(x))
-table['men'] = table['men'].map(lambda x: int(x))
-table['women'] = table['women'].map(lambda x: int(x))
+#List comprehensions work instead of lambda functions for next 3 lines.
+#However, generator objects do not work.
+table['total'] = [int(x) for x in table['total']]
+table['men'] = [int(x) for x in table['men']]
+table['women'] = [int(x) for x in table['women']]
 print table.describe()
 print 'Men Median: ' + str(table['men'].median())
 print 'Women Median: ' + str(table['women'].median())
@@ -63,15 +67,18 @@ table.hist(column='women')
 plt.show()
 
 columns = ['Country Name','Country Code','Indicator Name','Indicator Code',
-           '1999','2000','2001','2002','2003','2004','2005','2006','2007','2008','2009','2010']
-df1999to2010 = pd.read_csv('ny.gdp.mktp.cd_Indicator_en_csv_v2.csv', skiprows=4, usecols=columns)
+           '1999','2000','2001','2002','2003','2004','2005','2006','2007',
+           '2008','2009','2010']
+df1999to2010 = pd.read_csv('ny.gdp.mktp.cd_Indicator_en_csv_v2.csv', 
+    skiprows=4, usecols=columns)
 #print df1999to2010
 
 df1999to2010.set_index('Country Name', inplace=True)
 table.set_index('country', inplace=True)
-merged = pd.merge(table, df1999to2010, how='inner', left_index=True, right_index=True)
+merged = pd.merge(table, df1999to2010, how='inner', left_index=True,
+                    right_index=True)
 merged['CommonGDP'] = merged.apply(lambda x: x[x['year']], axis=1)
-merged.dropna(how='any', axis=0, inplace=True)  #drops rows with nothing in them
+merged.dropna(how='any', axis=0, inplace=True)  #drops empty rows
 #print merged
 merged['logGDP'] = np.log(merged['CommonGDP'])
 
@@ -92,6 +99,8 @@ plt.plot(logGDP, b + m*logGDP, '-')
 plt.show()
 print f.summary()
 
-print 'There is a weak positive correlation between nominal GDP and education life expectancy.'
-print 'Generally we can expect that wealthier nations have established education systems.'
+print 'There is a weak positive correlation between nominal GDP and '
+print 'education life expectancy.'
+print 'Generally we can expect that wealthier nations have established'
+print 'education systems.'
 
